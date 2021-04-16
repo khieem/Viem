@@ -2,16 +2,20 @@
 import socket
 import threading
 from tkinter import *
+from user import *
 
 
-PORT = 4720
-SERVER = "192.168.32.129"
-ADDRESS = (SERVER, PORT)
-FORMAT = "utf-8"
+# PORT = 4720
+# SERVER = "192.168.32.129"
+# ADDRESS = (SERVER, PORT)
+# FORMAT = "utf-8"
+#
+# # Create a new client socket and connect to the server
+# client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+# client.connect(ADDRESS)
 
-# Create a new client socket and connect to the server
-client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-client.connect(ADDRESS)
+client = User()
+client.connect()
 
 # GUI class for the chat
 class GUI:
@@ -52,6 +56,7 @@ class GUI:
     def goAhead(self, name):
         self.login.destroy()
         self.layout(name)
+        client.set_name(name)
 
         # the thread to receive messages
         rcv = threading.Thread(target=self.receive)
@@ -101,7 +106,8 @@ class GUI:
         self.textCons.config(state=DISABLED)
         while True:
             message = (f"{self.name}: {self.msg}")
-            client.send(message.encode(FORMAT))
+            client.socket.send(message.encode(FORMAT))
+            # client.send(message.encode(FORMAT))
             break
 
     # function to basically start the thread for sending messages
@@ -116,11 +122,13 @@ class GUI:
     def receive(self):
         while True:
             try:
-                message = client.recv(1024).decode(FORMAT)
+                message = client.socket.recv(1024).decode(FORMAT)
+                # message = client.recv(1024).decode(FORMAT)
 
                 # if the messages from the server is NAME send the client's name
                 if message == 'NAME':
-                    client.send(self.name.encode(FORMAT))
+                    client.socket.send(self.name.encode(FORMAT))
+                    # client.send(self.name.encode(FORMAT))
                 else:
                     # insert messages to text box
                     self.textCons.config(state=NORMAL)
@@ -132,7 +140,8 @@ class GUI:
             except:
                 # an error will be printed on the command line or console if there's an error
                 print("An error occured!")
-                client.close()
+                # client.close()
+                client.socket.close()
                 break
 
 # create a GUI class object
