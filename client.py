@@ -127,7 +127,8 @@ class GUI:
 
                 # if the messages from the server is NAME send the client's name
                 if message == 'NAME':
-                    client.socket.send(self.name.encode(FORMAT))
+                    client.socket.send(client.get_name().encode(FORMAT))
+                    # client.socket.send(self.name.encode(FORMAT))
                     # client.send(self.name.encode(FORMAT))
                 else:
                     # insert messages to text box
