@@ -2,20 +2,14 @@
 import socket
 import threading
 from tkinter import *
-from tkinter import font
-from tkinter import ttk
 
-# import all functions /
-#  everthing from chat.py file
-# from chat import *
 
 PORT = 4720
 SERVER = "192.168.32.129"
 ADDRESS = (SERVER, PORT)
 FORMAT = "utf-8"
 
-# Create a new client socket
-# and connect to the server
+# Create a new client socket and connect to the server
 client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 client.connect(ADDRESS)
 
@@ -34,28 +28,25 @@ class GUI:
         self.login.title("Login")
         self.login.resizable(width=False, height=False)
         self.login.configure(width=400, height=300)
+
         # create a Label
         self.pls = Label(self.login, text="Please login to continue", justify=CENTER, font="Helvetica 14 bold")
         self.pls.place(relheight=0.15, relx=0.2, rely=0.07)
+
         # create a Label
         self.labelName = Label(self.login, text="Name: ", font="Helvetica 12")
-
         self.labelName.place(relheight=0.2, relx=0.1, rely=0.2)
 
-        # create a entry box for
-        # tyoing the message
+        # create a entry box for tying the message
         self.entryName = Entry(self.login, font="Helvetica 14")
-
         self.entryName.place(relwidth=0.4, relheight=0.12, relx=0.35, rely=0.2)
-
         # set the focus of the curser
         self.entryName.focus()
 
-        # create a Continue Button
-        # along with action
+        # create a Continue Button along with action
         self.go = Button(self.login, text="CONTINUE", font="Helvetica 14 bold", command=lambda: self.goAhead(self.entryName.get()))
-
         self.go.place(relx=0.4, rely=0.55)
+
         self.Window.mainloop()
 
     def goAhead(self, name):
@@ -70,6 +61,7 @@ class GUI:
     def layout(self, name):
 
         self.name = name
+
         # to show chat window
         self.Window.deiconify()
         self.Window.title("CHATROOM")
@@ -88,8 +80,7 @@ class GUI:
         self.labelBottom.place(relwidth=1, rely=0.825)
 
         self.entryMsg = Entry(self.labelBottom, bg="#2C3E50", fg="#EAECEE", font="Helvetica 13")
-        # place the given widget
-        # into the gui window
+        # place the given widget into the gui window
         self.entryMsg.place(relwidth=0.74, relheight=0.06, rely=0.008, relx=0.011)
         self.entryMsg.focus()
 
@@ -100,12 +91,18 @@ class GUI:
 
         # create a scroll bar
         scrollbar = Scrollbar(self.textCons)
-        # place the scroll bar
-        # into the gui window
+        # place the scroll bar into the gui window
         scrollbar.place(relheight=1, relx=0.974)
         scrollbar.config(command=self.textCons.yview)
 
         self.textCons.config(state=DISABLED)
+
+    def sendMessage(self):
+        self.textCons.config(state=DISABLED)
+        while True:
+            message = (f"{self.name}: {self.msg}")
+            client.send(message.encode(FORMAT))
+            break
 
     # function to basically start the thread for sending messages
     def sendButton(self, msg):
@@ -127,9 +124,9 @@ class GUI:
                 else:
                     # insert messages to text box
                     self.textCons.config(state=NORMAL)
-                    self.textCons.insert(END,
-                                         message + "\n\n")
+                    self.textCons.insert(END, message + "\n\n")
 
+                    # only read
                     self.textCons.config(state=DISABLED)
                     self.textCons.see(END)
             except:
@@ -137,15 +134,6 @@ class GUI:
                 print("An error occured!")
                 client.close()
                 break
-
-                # function to send messages
-
-    def sendMessage(self):
-        self.textCons.config(state=DISABLED)
-        while True:
-            message = (f"{self.name}: {self.msg}")
-            client.send(message.encode(FORMAT))
-            break
 
 # create a GUI class object
 g = GUI()
