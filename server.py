@@ -6,6 +6,7 @@ PORT = 4720
 
 # An IPv4 address is obtained for the server.
 SERVER = socket.gethostbyname(socket.gethostname())
+SERVER = 'localhost'
 
 # Address is stored as a tuple
 ADDRESS = (SERVER, PORT)

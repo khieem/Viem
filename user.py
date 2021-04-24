@@ -2,6 +2,7 @@ import socket
 
 PORT = 4720
 SERVER = "192.168.32.129"
+SERVER = 'localhost'
 ADDRESS = (SERVER, PORT)
 FORMAT = 'utf8'
 
