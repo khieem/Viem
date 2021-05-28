@@ -23,3 +23,8 @@ class User:
     def connect(self):
         self.socket.connect(ADDRESS)
 
+    def send(self, message):
+        self.socket.send(message.encode(FORMAT) if isinstance(message, str) else message)
+
+    def receive(self):
+        return self.socket.recv(1024).decode(FORMAT)

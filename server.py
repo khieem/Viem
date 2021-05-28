@@ -1,81 +1,82 @@
 import socket
 import threading
-
+from crypto import Crypto
+import base64
 
 PORT = 4720
-
-# An IPv4 address is obtained for the server.
 SERVER = socket.gethostbyname(socket.gethostname())
 SERVER = 'localhost'
-
-# Address is stored as a tuple
 ADDRESS = (SERVER, PORT)
-
-# the format in which encoding and decoding will occur
 FORMAT = "utf-8"
+crypto = Crypto()
 
-# Lists that will contains all the clients connected to the server and their names.
-clients, names = [], []
+# danh sách socket, name2addr là 1 dict trả về tên khi nhập vào addr, adrr2name tương tự
+clients, name2addr, addr2name = [], {}, {}
 
-# Create a new socket for the server
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-# Listen
 server.bind(ADDRESS)
+shared_key = []
+online = ''
 
-# function to start the connection
 def startChat():
-    print("server is working on " + SERVER)
+	print(f"server đang đợi ở {SERVER}:{PORT}")
+	server.listen()
+	online = '1'
+	while True:
+		conn, addr = server.accept()
 
-    # listening for connections
-    server.listen()
+		private_key = crypto.generate_private_key()
+		peer_public_key = private_key.public_key()
 
-    while True:
-        # accept connections and returns a new connection to the client and the address of client
-        conn, addr = server.accept()
-        conn.send("NAME".encode(FORMAT))
+		conn.send(crypto.to_bytes(peer_public_key))
+		client_public_key = conn.recv(1024)
+		
+		client_public_key = crypto.load_public_key(client_public_key)
+		shared_key.append(crypto.exchange_key(private_key, client_public_key))
 
-        # 1024 represents the max amount of data that can be received (bytes)
-        name = conn.recv(1024).decode(FORMAT)
+		name = conn.recv(1024).decode(FORMAT)
 
-        # append the name and client to the respective list
-        names.append(name)
-        clients.append(conn)
-        print(f"Name is :{name}")
+		name2addr[name] = addr[0]
+		addr2name[addr[0]] = name
+		online = online + name + " "
+		clients.append(conn)
 
-        # broadcast message
-        broadcastMessage(f"{name} has joined the chat!".encode(FORMAT))
+		print(f"Name is :{name}")
 
-        conn.send('Connection successful!'.encode(FORMAT))
+		broadcast(f"0{name}".encode(FORMAT), conn)
+		conn.send(online.encode(FORMAT))
 
-        # Start the handling thread
-        thread = threading.Thread(target=handle, args=(conn, addr))
-        thread.start()
+		thread = threading.Thread(target=handle, args=(conn, addr))
+		thread.start()
 
-        # no. of clients connected to the server
-        print(f"active connections {threading.activeCount() - 1}")
-
-
-# handle the incoming messages
 def handle(conn, addr):
-    print(f"new connection {addr}")
-    connected = True
+	print(f"new connection {addr}")
+	connected = True
 
-    while connected:
-        # recieve message
-        message = conn.recv(1024)
+	flag = 0
+	while connected:
+		try:
+			message = conn.recv(1024)
+			message = crypto._decrypt(message, shared_key[clients.index(conn)])
+			broadcast(message)
+		except:
+			if flag == 0:
+				remove(conn)
+				print(addr2name[addr[0]], 'đã ngắt kết nối')
+				broadcast('2'+ addr2name[addr[0]], None)
+				flag = 1
+				continue
 
-        # broadcast message
-        broadcastMessage(message)
+	conn.close()
 
-    # close the connection
-    conn.close()
+def broadcast(message, client=None):
+	for c in clients:
+		if c != client:
+			c.send(message.encode(FORMAT) if isinstance(message, str) else message)
 
-# broadcasting messages to the each clients
-def broadcastMessage(message):
-    for client in clients:
-        client.send(message)
+def remove(conn):
+	if conn in clients:
+		shared_key.remove(shared_key[clients.index(conn)])
+		clients.remove(conn)
 
-
-# call the method to begin the communication
 startChat()
